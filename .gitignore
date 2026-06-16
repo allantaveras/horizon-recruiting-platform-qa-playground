@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Environment variables (contains secrets — only .env.example is committed)
+.env
+.env.local
+.env.production.local
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Playwright test artifacts
+playwright-report/
+test-results/
+
+# Runtime data files
+received_webhooks.json
+
+# IDE / OS artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

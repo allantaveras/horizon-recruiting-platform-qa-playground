@@ -1,0 +1,59 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    - name: Install Node Dependencies
+      run: npm ci
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps chromium
+
+    - name: Spin up Docker Compose Environment
+      run: |
+        docker-compose up -d
+        echo "Waiting for services to boot up..."
+        
+    - name: Health Check Services
+      run: |
+        # Wait up to 60 seconds for the nextjs app to return HTTP 200/302 on landing page
+        for i in {1..12}; do
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 | grep -E "200|302" > /dev/null; then
+            echo "Horizon platform is healthy and ready!"
+            exit 0
+          fi
+          echo "Waiting for Next.js app container to start (attempt $i/12)..."
+          sleep 5
+        done
+        echo "Error: Next.js container failed to start within time limit."
+        docker-compose logs
+        exit 1
+
+    - name: Execute Playwright E2E Tests
+      run: npm run test
+
+    - name: Upload Playwright Test Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30

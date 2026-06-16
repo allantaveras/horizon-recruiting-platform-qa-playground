@@ -1,0 +1,87 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: recruiting-db
+    # DEVELOPMENT ONLY: Hardcoded database credentials for local sandbox testing.
+    # Do not use these credentials in production environments.
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret-db-password-12345
+      POSTGRES_DB: postgres
+    ports:
+      - "54322:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./supabase/migrations/20260612000000_init_schema.sql:/docker-entrypoint-initdb.d/1-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth:
+    image: supabase/gotrue:v2.143.0
+    container_name: recruiting-auth
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "9999:9999"
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:3000
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgresql://postgres:secret-db-password-12345@db:5432/postgres?sslmode=disable
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_URI_ALLOW_LIST: http://localhost:3000/*
+      # DEVELOPMENT ONLY: Hardcoded JWT secrets for signing and decrypting test tokens.
+      GOTRUE_JWT_SECRET: super-secret-jwt-key-with-at-least-32-characters
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+
+  postgrest:
+    image: postgrest/postgrest:v11.1.0
+    container_name: recruiting-postgrest
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "30000:3000"
+    environment:
+      PGRST_DB_URI: postgresql://postgres:secret-db-password-12345@db:5432/postgres
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      # DEVELOPMENT ONLY: Hardcoded API schema client keys for local development routing.
+      PGRST_JWT_SECRET: super-secret-jwt-key-with-at-least-32-characters
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: recruiting-app
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+      postgrest:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    # DEVELOPMENT ONLY: Default local sandbox settings, database endpoints, and webhook configs.
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:3000
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlY3J1aXRpbmciLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcyMTI4OTYwMCwiZXhwIjoyMDI3MDQ2NDAwfQ.oJgo_WtaknNVZcsb3IRTDrU5YelUmdl-FGHtdbA1aug
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlY3J1aXRpbmciLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzIxMjg5NjAwLCJleHAiOjIwMjcwNDY0MDB9.zGdKnqOK9vSjDDrgIEr5wHuDFr2KAJfRAFVXWLi9rVQ
+      DATABASE_URL: postgresql://postgres:secret-db-password-12345@db:5432/postgres
+      NODE_ENV: development
+      WEBHOOK_SECRET: super-secret-webhook-key-for-hmac-signatures
+      NEXT_PUBLIC_WEBHOOK_RECEIVER_URL: http://localhost:3000/api/webhooks
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  pgdata:
