@@ -5,9 +5,11 @@
 [![Supabase](https://img.shields.io/badge/Supabase-JS_v2-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker)](https://docs.docker.com/compose/)
+[![GitHub Actions](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions)](https://github.com/features/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-**Horizon** is a production-grade candidate pipeline tracking and hiring management platform. Built as a comprehensive QA engineering portfolio project, it showcases robust end-to-end testing practices, rigorous role-based access controls (RBAC), and server-side activity audit trail systems.
+**Horizon** is a production-grade candidate pipeline tracking and hiring management platform. Built as a comprehensive QA engineering portfolio project, it features a full-stack application with robust end-to-end testing (39 tests across 8 spec files), role-based access controls (RBAC), immutable audit trails, HMAC-signed webhooks, resume file uploads, and a complete CI/CD pipeline — all containerized with Docker Compose.
 
 ---
 
@@ -21,19 +23,75 @@
 
 ## 🚀 Key Features
 
-*   **Interactive Hiring Pipeline**: Seamless stage transition buttons (`Applied` ➔ `Screening` ➔ `Interview` ➔ `Offer` ➔ `Hired` / `Rejected`).
-*   **Role-Based Access Control (RBAC)**: Secure access levels for Administrators, Recruiters, and Guest Viewers.
-*   **Immutable Activity Audit Trail**: Auto-computes changed-field logs (from/to diffs) on candidate record mutations.
-*   **HMAC-Signed Interview Webhooks**: Server-side webhook dispatch on status changes to `Interview` with cryptographically verified HMAC-SHA256 headers.
-*   **Full Testing Suite**: 30+ E2E browser tests and specialized API validation scripts written with Playwright.
-*   **Search & Filter**: Debounced live search with pipeline status filtering.
-*   **Public Application Portal**: Candidates can self-apply through a public form without authentication.
+### Application & UI
+*   **Interactive Hiring Pipeline Stepper**: Visual stage transition buttons on the candidate detail page (`Applied` ➔ `Screening` ➔ `Interview` ➔ `Offer` ➔ `Hired` / `Rejected`) with real-time status updates and loading indicators.
+*   **Inline Status Dropdown**: Quick-change status selectors directly in the candidate list table for Admin/Recruiter roles, with disabled states for Viewers.
+*   **Dashboard Analytics**: Real-time metrics including Total Candidates, Total Hires, Active Pipeline count, and Offer-to-Hire Conversion Rate, with interactive pipeline stage cards featuring mini bar chart visualizations.
+*   **Resolution Metrics Panel**: Progress bars showing Hired vs Rejected resolution ratios against total candidates.
+*   **Candidate Directory Table**: Sortable candidate list with avatar indicators, email/phone display, LinkedIn profile links, date formatting, and role-aware inline status editing.
+*   **Candidate Detail View**: Full profile page with contact details (email, phone, LinkedIn, resume download), internal notes, and a complete hiring timeline/audit trail with visual timeline dots.
+*   **Slide-out Add Candidate Drawer**: Modal form for creating new candidates with fields for name, email, phone, LinkedIn URL, resume PDF upload, initial pipeline status, and internal notes.
+*   **Public Candidate Application Portal**: Unauthenticated `/apply` page where candidates can self-submit their application (name, email, phone, LinkedIn, resume PDF upload, cover letter) without needing a login.
+*   **Debounced Live Search**: 300ms debounced search filtering candidates by name, email, or phone across the candidate directory.
+*   **Pipeline Status Filter**: Dropdown filter to view candidates by specific hiring stages (`Applied`, `Screening`, `Interview`, `Offer`, `Hired`, `Rejected`).
+*   **Empty State Handling**: User-friendly messaging when no candidates match search/filter queries.
+*   **Quick Login Demo Buttons**: One-click demo login buttons for Admin, Recruiter, and Viewer roles on the login page for rapid testing.
+*   **Database Reset Button**: Dev-only "Reset Demo Data" button on the login page that calls the `/api/test/reset` endpoint to re-seed the database.
+*   **Custom Delete Confirmation Modal**: Glassmorphism-styled confirmation dialog for Admin candidate deletion (replaces native `confirm()` dialogs).
+
+### Design System
+*   **Dark Mode Glassmorphism UI**: Custom design system built with Tailwind CSS featuring backdrop blur effects, translucent glass cards, gradient borders, and ambient glow backgrounds.
+*   **Custom CSS Utilities**: Reusable `.glass-card`, `.glass-input`, and `.glass-sidebar` component classes with consistent `rgba` backgrounds, blur filters, and border treatments.
+*   **Ambient Background Glows**: Three positioned radial blur elements (purple, indigo, teal) creating depth and atmosphere.
+*   **Custom Color Palette**: Extended Tailwind theme with semantic tokens (`background`, `cardBackground`, `borderLight`, `accentPurple`, `accentIndigo`, `accentPink`, `accentTeal`, `textMuted`, `textLight`).
+*   **Status Badge System**: Color-coded status badges with consistent `bg/text/border` styling per pipeline stage across all views.
+*   **Role Badge System**: Color-coded user role indicators (purple for Admin, indigo for Recruiter, teal for Viewer) in the navigation bar.
+*   **Custom Scrollbar**: Styled WebKit scrollbar with translucent thumb and track.
+*   **Lucide React Icons**: Consistent iconography throughout the application using the Lucide icon library.
+
+### Security & Authentication
+*   **Role-Based Access Control (RBAC)**: Three-tier permission system:
+    * **Admin**: Full CRUD permissions — can create, read, update, and delete candidates.
+    * **Recruiter**: Partial CRUD — can create, read, and update candidates, but cannot delete.
+    * **Viewer**: Read-only — can search, filter, and review details, but cannot modify any data.
+*   **Supabase GoTrue Authentication**: Email/password authentication via GoTrue with JWT session tokens stored in cookies (`sb-access-token`).
+*   **Next.js Edge Middleware**: Route protection middleware that redirects unauthenticated users to the login page and authenticated users away from the login page to the dashboard. Exempts public routes (`/apply`, `/api/*`, `/auth/*`, `/rest/*`).
+*   **PostgreSQL Row-Level Security (RLS)**: 8 RLS policies enforcing data access at the database level across `profiles`, `candidates`, `audit_logs`, and `audit_webhooks` tables.
+*   **Server-Side RBAC Enforcement**: API routes validate user roles server-side before allowing mutations (POST/PUT/DELETE), returning `401 Unauthorized` or `403 Forbidden` as appropriate.
+*   **Secure Session Cleanup**: Login page proactively clears stale cookies, `localStorage` tokens, and calls `supabase.auth.signOut()` on mount to ensure clean session state.
+*   **Server-Side Logout Endpoint**: Dedicated `/api/auth/logout` POST route that expires the `sb-access-token` cookie with `httpOnly` and `sameSite` flags.
+*   **Production Environment Guard**: The `/api/test/reset` endpoint is blocked in production (`NODE_ENV === 'production'` returns `403`).
+
+### API Layer
+*   **RESTful API Routes** (Next.js Route Handlers):
+    * `GET /api/candidates` — List, search (by name/email/phone via `ilike`), and filter candidates (by status).
+    * `POST /api/candidates` — Create a new candidate (Admin/Recruiter only) with server-side validation and audit log creation.
+    * `GET /api/candidates/[id]` — Retrieve a single candidate with associated audit logs and webhook history.
+    * `PUT /api/candidates/[id]` — Update a candidate with automatic field-level diff detection, audit logging, and conditional webhook dispatch.
+    * `DELETE /api/candidates/[id]` — Delete a candidate (Admin only) with cascade cleanup of audit logs.
+    * `POST /api/apply` — Public (unauthenticated) candidate self-application endpoint with validation and audit logging.
+    * `POST /api/upload` — Resume PDF file upload endpoint with MIME type validation, UUID-based unique naming, and local filesystem storage in `public/resumes/`.
+    * `GET /api/webhooks` — Retrieve all received webhook payloads (for QA verification).
+    * `POST /api/webhooks` — Webhook receiver with HMAC-SHA256 signature verification and JSON file logging.
+    * `DELETE /api/webhooks` — Clear all received webhooks (test state reset helper).
+    * `POST /api/auth/logout` — Server-side session cookie expiration.
+    * `POST /api/test/reset` — Database reset via the `reset_test_database()` stored procedure (dev/test only).
+*   **Input Validation**: Server-side validation for required fields (name, email format) and enum constraints (pipeline status values) returning structured `400` errors.
+*   **Origin Unification Proxy**: Next.js `rewrites` in `next.config.js` route client `/auth/v1/*` requests to the GoTrue container and `/rest/v1/*` requests to the PostgREST container, keeping the browser CORS-free on a single origin.
+
+### Data & Audit System
+*   **Immutable Activity Audit Trail**: Every candidate creation (`CREATE`) and update (`UPDATE`) action writes to the `audit_logs` table with actor ID, actor role, action type, and a JSONB `changed_fields` diff showing `{ field: { from: "old", to: "new" } }` for each modified field.
+*   **Visual Hiring Timeline**: The candidate detail page renders audit logs as a vertical timeline with dot markers, role badges, timestamps, and human-readable change descriptions.
+*   **HMAC-Signed Interview Webhooks**: When a candidate's status transitions to `Interview`, the server automatically dispatches a webhook POST to the configured receiver URL, signed with an HMAC-SHA256 signature in the `X-Recruiting-Signature` header. The receiver verifies the signature before accepting the payload.
+*   **Webhook Audit Table**: All webhook dispatches are logged in the `audit_webhooks` table with the full payload, target URL, response status, response body, success flag, and retry count.
+*   **Resume PDF Upload**: File upload API that validates PDF MIME type, generates UUID-prefixed filenames, stores files locally in `public/resumes/`, and returns a URL path for candidate record linking.
+*   **Database Reset Procedure**: The `reset_test_database()` PostgreSQL stored procedure fully resets auth users, identities, profiles, candidates, and audit logs back to seed state — with dynamic SQL to handle auth schema availability.
 
 ---
 
 ## 🏗️ System Architecture
 
-Horizon relies on a unified Docker Compose architecture proxying authentication and database requests to keep the browser environment CORS-free:
+Horizon runs on a unified Docker Compose architecture proxying authentication and database requests to keep the browser environment CORS-free:
 
 ```mermaid
 graph TD
@@ -41,8 +99,9 @@ graph TD
     NextJS[Next.js App & API Gateway]
     GoTrue[Supabase Auth / GoTrue]
     PostgREST[PostgREST Engine]
-    Postgres[(PostgreSQL Database)]
+    Postgres[(PostgreSQL 15 Database)]
     WebhookReceiver[Webhook Receiver API]
+    FileStore[(Local Filesystem - public/resumes/)]
 
     Client -->|HTTP / HTML / JSON| NextJS
     Client -->|Auth Rewrite: /auth/v1/*| NextJS
@@ -53,22 +112,57 @@ graph TD
     PostgREST --> Postgres
     NextJS -->|HMAC POST /api/webhooks| WebhookReceiver
     WebhookReceiver -->|Appends to| JSONLogs[(received_webhooks.json)]
+    NextJS -->|PDF Upload /api/upload| FileStore
 ```
 
 *   **Origin Unification Proxy**: The Next.js server acts as an API gateway rewriting client requests. `/auth/v1/*` routes to `gotrue:9999`, and `/rest/v1/*` routes to `postgrest:3000`, securing internal service details from external exposure.
-*   **Security Validation Design**: Authentication JWTs are verified client-side for routing redirects, while PostgreSQL Row-Level Security (RLS) and cryptographic validations secure mutations at the database level.
+*   **Dual Supabase Clients**: The application uses two Supabase clients — a public `supabase` client (with `persistSession` and `autoRefreshToken`) for browser auth flows, and a privileged `supabaseAdmin` client (with `service_role` key and no session persistence) for server-side database operations. The admin key is guarded against client-side bundle leakage.
+*   **Custom Fetch Layer**: A custom `fetch` wrapper strips the `/rest/v1/` prefix when the Next.js server talks directly to PostgREST in Docker, maintaining compatibility with the Supabase JS client's URL construction.
+
+---
+
+## 🗄️ Database Schema
+
+The PostgreSQL schema consists of four tables with RLS enabled on all:
+
+| Table | Purpose | Key Columns |
+| :--- | :--- | :--- |
+| `profiles` | Maps auth users to RBAC roles | `id` (UUID, PK), `role` (Admin/Recruiter/Viewer) |
+| `candidates` | Stores candidate records | `id`, `name`, `email`, `phone`, `linkedin`, `resume_url`, `status`, `notes`, `created_at`, `updated_at` |
+| `audit_logs` | Immutable activity trail | `candidate_id` (FK CASCADE), `actor_id`, `actor_role`, `action`, `changed_fields` (JSONB) |
+| `audit_webhooks` | Webhook dispatch history | `candidate_id` (FK CASCADE), `event_type`, `payload` (JSONB), `target_url`, `response_status`, `success` |
+
+**Stored Procedures:**
+*   `handle_new_user()` — Trigger function that syncs `auth.users` to `public.profiles` on user creation (via `ON CONFLICT DO UPDATE`).
+*   `get_my_role()` — Security definer function that extracts the current user's role from `profiles` using the JWT `sub` claim, used in all RLS policies.
+*   `reset_test_database()` — Full database reset procedure with dynamic SQL for auth schema operations.
 
 ---
 
 ## 🔑 Demo Sandbox Access
 
-Horizon is pre-seeded with three access levels (Password: **`password123`**):
+Horizon is pre-seeded with three access levels and 8 candidate records spanning all 6 pipeline stages:
 
-| User Email | Role | UI View Access | Actions Permitted |
-| :--- | :---: | :--- | :--- |
-| `admin@recruiting.local` | **Admin** | Dashboard, Candidate List, Profile Detail | Full CRUD permissions (can delete candidates, reset sandbox). |
-| `recruiter@recruiting.local` | **Recruiter** | Dashboard, Candidate List, Profile Detail | Partial CRUD permissions (can create & edit candidates, cannot delete). |
-| `viewer@recruiting.local` | **Viewer** | Dashboard, Candidate List, Profile Detail | Read-only permissions (can search, filter, and review details). |
+| User Email | Role | Actions Permitted |
+| :--- | :---: | :--- |
+| `admin@recruiting.local` | **Admin** | Full CRUD — create, edit, delete candidates, reset sandbox |
+| `recruiter@recruiting.local` | **Recruiter** | Partial CRUD — create & edit candidates, cannot delete |
+| `viewer@recruiting.local` | **Viewer** | Read-only — search, filter, and review details only |
+
+> **Password for all accounts:** `password123`
+
+### Seeded Candidates
+
+| Name | Status | Notes |
+| :--- | :---: | :--- |
+| John Doe | Applied | Strong background in React and Node.js |
+| Jane Smith | Screening | Passed initial phone screen |
+| Alice Johnson | Interview | Technical assessment complete |
+| Bob Brown | Offer | Offer package sent ($135k base) |
+| Charlie Green | Hired | Offer accepted, start date set |
+| David White | Rejected | Failed technical test |
+| Eva Black | Screening | Engineering lead referral |
+| Frank Miller | Interview | Positive hiring manager feedback |
 
 ---
 
@@ -76,33 +170,58 @@ Horizon is pre-seeded with three access levels (Password: **`password123`**):
 
 ### Prerequisites
 
-*   Docker & Docker Compose installed.
-*   Node.js (v18+) installed for running local tests.
+*   **Docker & Docker Compose** installed (for the full containerized stack).
+*   **Node.js v18+** installed (for running local tests and development).
 
 ### Deployment Steps
 
 1.  Clone the repository and enter the directory:
     ```bash
-    git clone https://github.com/YOUR_USERNAME/horizon-recruiting-platform.git
+    git clone https://github.com/allantaveras/horizon-recruiting-platform.git
     cd horizon-recruiting-platform
     ```
-2.  Deploy the local containerized stack:
+2.  Copy the environment file:
+    ```bash
+    cp .env.example .env
+    ```
+3.  Deploy the local containerized stack:
     ```bash
     docker-compose up --build
     ```
-3.  Access the platform in your browser: [http://localhost:3000](http://localhost:3000)
+    This spins up 4 containers:
+    * `recruiting-db` — PostgreSQL 15 (port 54322)
+    * `recruiting-auth` — Supabase GoTrue v2.143.0 (port 9999)
+    * `recruiting-postgrest` — PostgREST v11.1.0 (port 30000)
+    * `recruiting-app` — Next.js 14 dev server (port 3000)
+
+4.  Access the platform in your browser: [http://localhost:3000](http://localhost:3000)
 
 ### Resetting the Sandbox
-The database is initialized automatically with test seeds. During testing or manual walkthroughs, you can reset the sandbox database at any time by clicking the **"(Dev Only) Reset Database"** button on the Login page or by sending an empty `POST` request to:
-```bash
-curl -X POST http://localhost:3000/api/test/reset
-```
+
+The database is initialized automatically with test seeds. Reset the sandbox at any time by:
+
+*   Clicking the **"Reset Demo Data (Dev Only)"** button on the Login page, or
+*   Sending a POST request:
+    ```bash
+    curl -X POST http://localhost:3000/api/test/reset
+    ```
+
+### Environment Variables
+
+| Variable | Description |
+| :--- | :--- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase API base URL (proxied through Next.js) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous JWT for client-side auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role JWT for server-side admin operations |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `WEBHOOK_SECRET` | HMAC-SHA256 secret for webhook signature generation/verification |
+| `NEXT_PUBLIC_WEBHOOK_RECEIVER_URL` | Target URL for interview webhook dispatch |
 
 ---
 
 ## 🧪 Testing Suite & QA Verification
 
-The repository includes a comprehensive testing infrastructure with **30+ test cases** designed to enforce stability across UI and API layers.
+The repository includes a comprehensive E2E testing infrastructure with **39 test cases across 8 spec files**, covering UI automation, API validation, RBAC enforcement, and webhook verification.
 
 ### Running Tests
 ```bash
@@ -110,12 +229,18 @@ The repository includes a comprehensive testing infrastructure with **30+ test c
 npm install
 npx playwright install chromium
 
-# Run all tests headlessly
+# Run all tests headlessly (sequential — single worker to prevent DB state collision)
 npm run test
 
 # Open Playwright UI mode for interactive inspection
 npx playwright test --ui
 ```
+
+### Playwright Configuration
+*   **Sequential execution**: `fullyParallel: false` with `workers: 1` to prevent database state collision between tests.
+*   **Trace capture**: `retain-on-failure` for post-mortem debugging.
+*   **Screenshots & Video**: Captured only on failure to minimize artifacts.
+*   **CI Reporter**: Uses Playwright `blob` reporter in CI, `html` reporter locally.
 
 ### Test Coverage Matrix
 
@@ -190,6 +315,27 @@ npx playwright test --ui
 
 ---
 
+## 🔄 CI/CD Pipeline
+
+The project includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs on every push and pull request to `main`:
+
+```mermaid
+graph LR
+    A[Checkout Code] --> B[Setup Node.js 18]
+    B --> C[npm ci]
+    C --> D[Install Playwright Chromium]
+    D --> E[docker-compose up -d]
+    E --> F[Health Check Loop - 60s timeout]
+    F --> G[Execute Playwright E2E Tests]
+    G --> H[Upload Report Artifacts - 30 day retention]
+```
+
+*   **Automated Environment Spin-Up**: Builds and starts the full Docker Compose stack in CI.
+*   **Health Check Polling**: Waits up to 60 seconds (12 attempts × 5s) for the Next.js container to return HTTP 200/302 before running tests.
+*   **Artifact Preservation**: Playwright HTML reports are uploaded as GitHub Actions artifacts with 30-day retention, even when tests fail (`if: always()`).
+
+---
+
 ## 📋 QA Documentation
 
 The `qa-docs/` directory contains a full set of QA engineering artifacts:
@@ -203,27 +349,86 @@ The `qa-docs/` directory contains a full set of QA engineering artifacts:
 | [risk_analysis_template.md](qa-docs/risk_analysis_template.md) | Risk analysis framework for feature releases |
 | [pull_request_template.md](qa-docs/pull_request_template.md) | PR review template with QA sign-off checklist |
 
+Additionally, the repository includes GitHub-native templates in `.github/`:
+*   **Bug Report Issue Template** (`.github/ISSUE_TEMPLATE/bug_report.md`)
+*   **Pull Request Template** (`.github/PULL_REQUEST_TEMPLATE.md`)
+
 ---
 
 ## 📁 Project Structure
 
 ```
+horizon-recruiting-platform/
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   └── bug_report.md              # GitHub issue template
+│   ├── PULL_REQUEST_TEMPLATE.md       # PR review template
+│   └── workflows/
+│       └── ci.yml                     # GitHub Actions CI pipeline
+├── docs/
+│   └── screenshots/                   # Application screenshots for README
+├── public/
+│   └── resumes/                       # Uploaded resume PDF storage
+├── qa-docs/                           # QA engineering documentation (6 artifacts)
 ├── src/
 │   ├── app/
-│   │   ├── api/                  # API routes (candidates, apply, webhooks, auth)
-│   │   ├── apply/                # Public candidate application page
-│   │   ├── candidates/           # Candidate list & detail pages
-│   │   ├── dashboard/            # Analytics dashboard
-│   │   └── page.tsx              # Login page
-│   ├── components/               # Shared UI components (Navigation)
-│   ├── lib/                      # Utilities (Supabase client, auth helpers, constants)
-│   └── middleware.ts             # Route protection middleware
-├── tests/                        # Playwright E2E test suite (8 spec files)
-├── qa-docs/                      # QA engineering documentation
-├── supabase/                     # Database migrations & seed data
-├── docker-compose.yml            # Full-stack container orchestration
-└── playwright.config.ts          # Test runner configuration
+│   │   ├── api/
+│   │   │   ├── apply/route.ts         # Public candidate application API
+│   │   │   ├── auth/logout/route.ts   # Server-side session expiration
+│   │   │   ├── candidates/
+│   │   │   │   ├── route.ts           # GET (list/search/filter) + POST (create)
+│   │   │   │   └── [id]/route.ts      # GET (detail) + PUT (update) + DELETE
+│   │   │   ├── test/reset/route.ts    # Dev-only database reset endpoint
+│   │   │   ├── upload/route.ts        # Resume PDF upload handler
+│   │   │   └── webhooks/route.ts      # HMAC webhook receiver (GET/POST/DELETE)
+│   │   ├── apply/page.tsx             # Public candidate application form
+│   │   ├── auth/v1/                   # Next.js rewrite proxy → GoTrue
+│   │   ├── candidates/
+│   │   │   ├── page.tsx               # Candidate directory (search, filter, table)
+│   │   │   └── [id]/page.tsx          # Candidate detail (profile, pipeline, audit trail)
+│   │   ├── dashboard/page.tsx         # Analytics dashboard (stats, pipeline, roster)
+│   │   ├── rest/v1/                   # Next.js rewrite proxy → PostgREST
+│   │   ├── globals.css                # Design system (glassmorphism, glows, scrollbar)
+│   │   ├── layout.tsx                 # Root layout with ambient glow backgrounds
+│   │   └── page.tsx                   # Login page (auth, quick login, reset)
+│   ├── components/
+│   │   └── Navigation.tsx             # Sticky nav bar (logo, links, role badge, logout)
+│   ├── lib/
+│   │   ├── auth-helpers.ts            # JWT cookie parser for API route auth
+│   │   ├── constants.ts               # Pipeline stages, status badge styles
+│   │   └── supabase.ts                # Dual Supabase client (public + admin)
+│   └── middleware.ts                  # Edge middleware (route protection, redirects)
+├── supabase/
+│   ├── migrations/
+│   │   └── 20260612000000_init_schema.sql  # Full schema (tables, RLS, triggers, procedures)
+│   └── seed.sql                       # Seed data (3 users, 8 candidates, 4 audit logs)
+├── tests/                             # 8 Playwright E2E spec files (39 tests)
+├── .env.example                       # Environment variable template
+├── docker-compose.yml                 # 4-service container orchestration
+├── Dockerfile                         # Node 18 Alpine container for Next.js
+├── next.config.js                     # Rewrites proxy configuration
+├── playwright.config.ts               # Test runner (sequential, single worker)
+├── tailwind.config.js                 # Extended theme (colors, gradients, blur)
+└── tsconfig.json                      # TypeScript configuration
 ```
+
+---
+
+## 🧰 Tech Stack Summary
+
+| Layer | Technology | Version |
+| :--- | :--- | :--- |
+| **Frontend** | Next.js (React) | 14.2.4 |
+| **Styling** | Tailwind CSS | 3.4.4 |
+| **Icons** | Lucide React | 0.395.0 |
+| **Auth** | Supabase GoTrue | v2.143.0 |
+| **Database** | PostgreSQL | 15 (Alpine) |
+| **API Gateway** | PostgREST | v11.1.0 |
+| **DB Client** | Supabase JS | 2.43.4 |
+| **Testing** | Playwright | 1.44.1 |
+| **Containerization** | Docker Compose | Multi-service |
+| **CI/CD** | GitHub Actions | Node 18 |
+| **Language** | TypeScript | 5.4.5 |
 
 ---
 

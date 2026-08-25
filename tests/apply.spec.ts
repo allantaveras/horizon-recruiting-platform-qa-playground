@@ -24,7 +24,12 @@ test.describe('Candidate Self-Application Flow', () => {
     await page.fill('#apply-email', 'candidate.public@example.com');
     await page.fill('#apply-phone', '+1 (555) 333-2222');
     await page.fill('#apply-linkedin', 'https://linkedin.com/in/candidatepublic');
-    await page.fill('#apply-resume', 'https://example.com/resumes/candidatepublic.pdf');
+    // Create a dummy PDF buffer to upload
+    await page.setInputFiles('#apply-resume-file', {
+      name: 'candidatepublic.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('dummy pdf content')
+    });
     await page.fill('#apply-notes', 'This is a cover letter note.');
 
     await page.click('#apply-submit-btn');

@@ -22,7 +22,11 @@ test.describe('Candidate Management Operations', () => {
     await page.fill('#form-email', 'qa.test@example.com');
     await page.fill('#form-phone', '+1 (555) 999-0000');
     await page.fill('#form-linkedin', 'https://linkedin.com/in/qatest');
-    await page.fill('#form-resume', 'https://example.com/resumes/qatest.pdf');
+    await page.setInputFiles('#form-resume-file', {
+      name: 'qatest.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('dummy pdf content')
+    });
     await page.selectOption('#form-status', 'Applied');
     await page.fill('#form-notes', 'Pre-screening note.');
     
@@ -66,8 +70,8 @@ test.describe('Candidate Management Operations', () => {
     // 2. Go to Candidates List
     await page.click('#nav-candidates');
     
-    // Review the top candidate (e.g. John Doe - c1111111-1111-1111-1111-111111111111)
-    await page.click('#view-details-c1111111-1111-1111-1111-111111111111');
+    // Review the top candidate (e.g. John Doe - ed0905c9-1111-4e76-9433-b9715deb4ed2)
+    await page.click('#view-details-ed0905c9-1111-4e76-9433-b9715deb4ed2');
     await expect(page.url()).toContain('/candidates/');
 
     // 3. Verify Delete button exists and delete

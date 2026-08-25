@@ -3,7 +3,7 @@ TRUNCATE public.audit_logs CASCADE;
 TRUNCATE public.audit_webhooks CASCADE;
 TRUNCATE public.candidates CASCADE;
 DELETE FROM auth.users WHERE email IN ('admin@recruiting.local', 'recruiter@recruiting.local', 'viewer@recruiting.local');
-DELETE FROM public.profiles WHERE id IN ('a1111111-1111-1111-1111-111111111111', 'b2222222-2222-2222-2222-222222222222', 'c3333333-3333-3333-3333-333333333333');
+DELETE FROM public.profiles WHERE id IN ('a1111111-1111-1111-1111-111111111111', 'b2222222-2222-2222-2222-222222222222', '3b8e6dfe-a3a0-4e3c-96c8-aacbf9c6f502');
 
 -- Insert seed users into auth.users (password is 'password123')
 INSERT INTO auth.users (
@@ -49,7 +49,7 @@ INSERT INTO auth.users (
   ),
   (
     '00000000-0000-0000-0000-000000000000',
-    'c3333333-3333-3333-3333-333333333333',
+    '3b8e6dfe-a3a0-4e3c-96c8-aacbf9c6f502',
     '',
     '',
     'viewer@recruiting.local',
@@ -91,10 +91,10 @@ INSERT INTO auth.identities (
     now()
   ),
   (
-    'c3333333-3333-3333-3333-333333333333',
-    'c3333333-3333-3333-3333-333333333333',
-    'c3333333-3333-3333-3333-333333333333',
-    '{"sub": "c3333333-3333-3333-3333-333333333333", "email": "viewer@recruiting.local"}',
+    '3b8e6dfe-a3a0-4e3c-96c8-aacbf9c6f502',
+    '3b8e6dfe-a3a0-4e3c-96c8-aacbf9c6f502',
+    '3b8e6dfe-a3a0-4e3c-96c8-aacbf9c6f502',
+    '{"sub": "3b8e6dfe-a3a0-4e3c-96c8-aacbf9c6f502", "email": "viewer@recruiting.local"}',
     'email',
     now(),
     now(),
@@ -105,13 +105,13 @@ INSERT INTO auth.identities (
 INSERT INTO public.profiles (id, role, updated_at) VALUES
   ('a1111111-1111-1111-1111-111111111111', 'Admin', now()),
   ('b2222222-2222-2222-2222-222222222222', 'Recruiter', now()),
-  ('c3333333-3333-3333-3333-333333333333', 'Viewer', now())
+  ('3b8e6dfe-a3a0-4e3c-96c8-aacbf9c6f502', 'Viewer', now())
 ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
 -- Seed Candidates
 INSERT INTO public.candidates (id, name, email, phone, linkedin, resume_url, status, notes, created_at, updated_at) VALUES
   (
-    'c1111111-1111-1111-1111-111111111111',
+    'ed0905c9-1111-4e76-9433-b9715deb4ed2',
     'John Doe',
     'john.doe@example.com',
     '+1 (555) 123-4567',
@@ -123,7 +123,7 @@ INSERT INTO public.candidates (id, name, email, phone, linkedin, resume_url, sta
     now() - interval '10 days'
   ),
   (
-    'c2222222-2222-2222-2222-222222222222',
+    '7ddd3508-3742-469b-93c5-9d645a8328eb',
     'Jane Smith',
     'jane.smith@example.com',
     '+1 (555) 987-6543',
@@ -135,7 +135,7 @@ INSERT INTO public.candidates (id, name, email, phone, linkedin, resume_url, sta
     now() - interval '6 days'
   ),
   (
-    'c3333333-3333-3333-3333-333333333333',
+    '3b8e6dfe-a3a0-4e3c-96c8-aacbf9c6f502',
     'Alice Johnson',
     'alice.j@example.com',
     '+1 (555) 456-7890',
@@ -147,7 +147,7 @@ INSERT INTO public.candidates (id, name, email, phone, linkedin, resume_url, sta
     now() - interval '4 days'
   ),
   (
-    'c4444444-4444-4444-4444-444444444444',
+    '0574dd65-a66a-4813-9c8a-089b9f997b5f',
     'Bob Brown',
     'bob.brown@example.com',
     '+1 (555) 321-7654',
@@ -159,7 +159,7 @@ INSERT INTO public.candidates (id, name, email, phone, linkedin, resume_url, sta
     now() - interval '2 days'
   ),
   (
-    'c5555555-5555-5555-5555-555555555555',
+    'd2ecf6e6-c84d-4f94-89f5-4f2af4e68b73',
     'Charlie Green',
     'charlie.g@example.com',
     '+1 (555) 789-0123',
@@ -171,7 +171,7 @@ INSERT INTO public.candidates (id, name, email, phone, linkedin, resume_url, sta
     now() - interval '1 day'
   ),
   (
-    'c6666666-6666-6666-6666-666666666666',
+    'c7fb9358-47a7-44d6-a263-83cee0d45c0d',
     'David White',
     'david.w@example.com',
     '+1 (555) 890-1234',
@@ -183,7 +183,7 @@ INSERT INTO public.candidates (id, name, email, phone, linkedin, resume_url, sta
     now() - interval '3 days'
   ),
   (
-    'c7777777-7777-7777-7777-777777777777',
+    '753a93cc-ecf4-4c28-b9d4-39966eb0e375',
     'Eva Black',
     'eva.black@example.com',
     '+1 (555) 234-5678',
@@ -195,7 +195,7 @@ INSERT INTO public.candidates (id, name, email, phone, linkedin, resume_url, sta
     now() - interval '3 days'
   ),
   (
-    'c8888888-8888-8888-8888-888888888888',
+    '51bd78fd-bc28-47c7-beac-7d1e5ff74b6c',
     'Frank Miller',
     'frank.m@example.com',
     '+1 (555) 876-5432',
@@ -210,7 +210,7 @@ INSERT INTO public.candidates (id, name, email, phone, linkedin, resume_url, sta
 -- Seed Audit Logs
 INSERT INTO public.audit_logs (candidate_id, actor_id, actor_role, action, changed_fields, created_at) VALUES
   (
-    'c2222222-2222-2222-2222-222222222222',
+    '7ddd3508-3742-469b-93c5-9d645a8328eb',
     'b2222222-2222-2222-2222-222222222222',
     'Recruiter',
     'UPDATE',
@@ -218,7 +218,7 @@ INSERT INTO public.audit_logs (candidate_id, actor_id, actor_role, action, chang
     now() - interval '6 days'
   ),
   (
-    'c3333333-3333-3333-3333-333333333333',
+    '3b8e6dfe-a3a0-4e3c-96c8-aacbf9c6f502',
     'b2222222-2222-2222-2222-222222222222',
     'Recruiter',
     'UPDATE',
@@ -226,7 +226,7 @@ INSERT INTO public.audit_logs (candidate_id, actor_id, actor_role, action, chang
     now() - interval '4 days'
   ),
   (
-    'c4444444-4444-4444-4444-444444444444',
+    '0574dd65-a66a-4813-9c8a-089b9f997b5f',
     'a1111111-1111-1111-1111-111111111111',
     'Admin',
     'UPDATE',
@@ -234,7 +234,7 @@ INSERT INTO public.audit_logs (candidate_id, actor_id, actor_role, action, chang
     now() - interval '2 days'
   ),
   (
-    'c5555555-5555-5555-5555-555555555555',
+    'd2ecf6e6-c84d-4f94-89f5-4f2af4e68b73',
     'a1111111-1111-1111-1111-111111111111',
     'Admin',
     'UPDATE',

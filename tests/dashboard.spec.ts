@@ -16,7 +16,7 @@ test.describe('Dashboard Analytics & Statistics', () => {
     await expect(page.locator('text=Hiring Operations')).toBeVisible();
 
     // Verify stat card labels are rendered anywhere on the page
-    await expect(page.locator('body')).toContainText('Total Database');
+    await expect(page.locator('body')).toContainText('Total Candidates');
     await expect(page.locator('body')).toContainText('Total Hires');
     await expect(page.locator('body')).toContainText('Active Pipeline');
     await expect(page.locator('body')).toContainText('Conversion Rate');
@@ -46,7 +46,7 @@ test.describe('Dashboard Analytics & Statistics', () => {
 
     // Dashboard should still load with statistics
     await expect(page.locator('text=Hiring Operations')).toBeVisible();
-    await expect(page.locator('text=Total Database')).toBeVisible();
+    await expect(page.locator('text=Total Candidates')).toBeVisible();
 
     // Verify Webhook navigation link is absent
     await expect(page.locator('#nav-webhooks')).toBeHidden();

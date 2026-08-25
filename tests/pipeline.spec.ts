@@ -14,7 +14,7 @@ test.describe('Hiring Pipeline Stage Transitions', () => {
 
     // Navigate to John Doe (Applied status)
     await page.click('#nav-candidates');
-    await page.click('#view-details-c1111111-1111-1111-1111-111111111111');
+    await page.click('#view-details-ed0905c9-1111-4e76-9433-b9715deb4ed2');
     await expect(page.url()).toContain('/candidates/');
 
     // Verify current status is Applied
@@ -41,7 +41,7 @@ test.describe('Hiring Pipeline Stage Transitions', () => {
 
     // Navigate to John Doe (Applied status)
     await page.click('#nav-candidates');
-    await page.click('#view-details-c1111111-1111-1111-1111-111111111111');
+    await page.click('#view-details-ed0905c9-1111-4e76-9433-b9715deb4ed2');
     await expect(page.url()).toContain('/candidates/');
 
     // Click the Rejected stage button
@@ -63,7 +63,7 @@ test.describe('Hiring Pipeline Stage Transitions', () => {
 
     // Navigate to John Doe detail page
     await page.click('#nav-candidates');
-    await page.click('#view-details-c1111111-1111-1111-1111-111111111111');
+    await page.click('#view-details-ed0905c9-1111-4e76-9433-b9715deb4ed2');
     await expect(page.url()).toContain('/candidates/');
 
     // Verify pipeline stage buttons are disabled for Viewer

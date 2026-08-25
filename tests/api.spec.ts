@@ -43,7 +43,7 @@ test.describe('API Endpoint Protection and Validation', () => {
     const token = await getAuthToken(request, 'Recruiter');
     
     // Pick John Doe (default ID seeded)
-    const candId = 'c1111111-1111-1111-1111-111111111111';
+    const candId = 'ed0905c9-1111-4e76-9433-b9715deb4ed2';
     
     const res = await request.delete(`/api/candidates/${candId}`, {
       headers: {
@@ -53,6 +53,18 @@ test.describe('API Endpoint Protection and Validation', () => {
     expect(res.status()).toBe(403);
     const data = await res.json();
     expect(data.error).toContain('Forbidden');
+  });
+
+  // TC-AUTH-API-03: Returns 404 for candidate deletes of non-existent IDs by Admin
+  test('TC-AUTH-API-03: should return 404 when Admin tries to delete a non-existent candidate', async ({ request }) => {
+    const token = await getAuthToken(request, 'Admin');
+    
+    const res = await request.delete('/api/candidates/00000000-0000-0000-0000-000000000000', {
+      headers: {
+        'Cookie': `sb-access-token=${token}`
+      }
+    });
+    expect(res.status()).toBe(404);
   });
 
   // TC-CAND-API-01: Returns 400 for candidate creation with missing name or invalid email
@@ -230,19 +242,54 @@ test.describe('API Endpoint Protection and Validation', () => {
   // TC-CAND-API-04: Update endpoint validates empty name
   test('TC-CAND-API-04: should return 400 when updating candidate with empty name', async ({ request }) => {
     const token = await getAuthToken(request, 'Recruiter');
-    const candId = 'c1111111-1111-1111-1111-111111111111';
-
+    const candId = 'ed0905c9-1111-4e76-9433-b9715deb4ed2';
+    
     const res = await request.put(`/api/candidates/${candId}`, {
       headers: {
-        'Cookie': `sb-access-token=${token}`,
-        'Content-Type': 'application/json'
+        'Cookie': `sb-access-token=${token}`
       },
       data: {
-        name: '   '
+        name: ' ', // empty/whitespace
       }
     });
     expect(res.status()).toBe(400);
-    expect((await res.json()).error).toContain('Name');
+    expect((await res.json()).error).toBe('Name cannot be empty');
+  });
+
+  test('TC-UPLOAD-API-01: should return 400 when uploading to /api/upload without a file', async ({ request }) => {
+    const res = await request.post('/api/upload', {
+      multipart: {} // empty multipart payload
+    });
+    expect(res.status()).toBe(400);
+    expect((await res.json()).error).toBe('No file uploaded');
+  });
+
+  test('TC-UPLOAD-API-02: should return 400 when uploading non-PDF to /api/upload', async ({ request }) => {
+    const res = await request.post('/api/upload', {
+      multipart: {
+        file: {
+          name: 'test.txt',
+          mimeType: 'text/plain',
+          buffer: Buffer.from('hello world')
+        }
+      }
+    });
+    expect(res.status()).toBe(400);
+    expect((await res.json()).error).toBe('Only PDF files are allowed');
+  });
+
+  test('TC-UPLOAD-API-03: should return 201 and file URL when uploading valid PDF', async ({ request }) => {
+    const res = await request.post('/api/upload', {
+      multipart: {
+        file: {
+          name: 'resume.pdf',
+          mimeType: 'application/pdf',
+          buffer: Buffer.from('fake-pdf-content')
+        }
+      }
+    });
+    expect(res.status()).toBe(201);
+    const data = await res.json();
+    expect(data.url).toMatch(/^\/resumes\/[a-f0-9-]{36}-resume.pdf$/);
   });
 });
-

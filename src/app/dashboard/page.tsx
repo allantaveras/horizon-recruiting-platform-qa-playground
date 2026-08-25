@@ -56,10 +56,10 @@ export default function Dashboard() {
 
   // Custom status configuration
   const pipelineStages = [
-    { label: 'Applied', count: applied, color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' },
-    { label: 'Screening', count: screening, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-    { label: 'Interview', count: interview, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-    { label: 'Offer', count: offer, color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
+    { label: 'Applied', count: applied, color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', barBg: 'bg-indigo-400' },
+    { label: 'Screening', count: screening, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', barBg: 'bg-blue-400' },
+    { label: 'Interview', count: interview, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', barBg: 'bg-purple-400' },
+    { label: 'Offer', count: offer, color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20', barBg: 'bg-pink-400' },
   ];
 
   return (
@@ -108,7 +108,7 @@ export default function Dashboard() {
               <div className="glass-card p-6 relative overflow-hidden group hover:border-white/15 transition-colors">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-bl-full filter blur-md" />
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-textMuted">Total Database</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-textMuted">Total Candidates</span>
                   <div className="p-2 bg-indigo-500/15 rounded-lg">
                     <Users className="w-5 h-5 text-indigo-400" />
                   </div>
@@ -179,7 +179,7 @@ export default function Dashboard() {
                     {/* Tiny custom SVG bar chart indicator */}
                     <div className="w-12 h-12 flex items-end justify-center space-x-1">
                       <div className="w-2.5 bg-white/5 rounded-t h-full" />
-                      <div className={`w-2.5 ${stage.color.replace('text-', 'bg-')} rounded-t`} style={{ height: `${total > 0 ? (stage.count / total) * 100 : 0}%` }} />
+                      <div className={`w-2.5 ${stage.barBg} rounded-t`} style={{ height: `${total > 0 ? (stage.count / total) * 100 : 0}%` }} />
                     </div>
                   </div>
                 ))}

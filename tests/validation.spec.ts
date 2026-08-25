@@ -87,7 +87,7 @@ test.describe('Form Validation & Error Handling', () => {
 
     // Navigate to a candidate detail
     await page.click('#nav-candidates');
-    await page.click('#view-details-c1111111-1111-1111-1111-111111111111');
+    await page.click('#view-details-ed0905c9-1111-4e76-9433-b9715deb4ed2');
     await expect(page.url()).toContain('/candidates/');
 
     // Enter edit mode
@@ -107,7 +107,7 @@ test.describe('Form Validation & Error Handling', () => {
     await expect(page).toHaveURL('/dashboard');
 
     await page.click('#nav-candidates');
-    await page.click('#view-details-c1111111-1111-1111-1111-111111111111');
+    await page.click('#view-details-ed0905c9-1111-4e76-9433-b9715deb4ed2');
     await expect(page.url()).toContain('/candidates/');
 
     await page.click('#edit-candidate-btn');
@@ -127,7 +127,7 @@ test.describe('Form Validation & Error Handling', () => {
     await expect(page).toHaveURL('/dashboard');
 
     await page.click('#nav-candidates');
-    await page.click('#view-details-c1111111-1111-1111-1111-111111111111');
+    await page.click('#view-details-ed0905c9-1111-4e76-9433-b9715deb4ed2');
     await expect(page.url()).toContain('/candidates/');
 
     // Enter edit mode

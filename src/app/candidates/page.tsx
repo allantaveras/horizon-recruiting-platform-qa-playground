@@ -66,6 +66,7 @@ export default function CandidatesList() {
   const [formPhone, setFormPhone] = useState('');
   const [formLinkedin, setFormLinkedin] = useState('');
   const [formResume, setFormResume] = useState('');
+  const [formResumeFile, setFormResumeFile] = useState<File | null>(null);
   const [formStatus, setFormStatus] = useState('Applied');
   const [formNotes, setFormNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -131,6 +132,27 @@ export default function CandidatesList() {
     }
 
     try {
+      let finalResumeUrl = formResume.trim();
+
+      // Handle PDF upload if a file was selected
+      if (formResumeFile) {
+        const formData = new FormData();
+        formData.append('file', formResumeFile);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const data = await uploadRes.json();
+          throw new Error(data.error || 'Failed to upload resume file');
+        }
+
+        const uploadData = await uploadRes.json();
+        finalResumeUrl = uploadData.url;
+      }
+
       const res = await fetch('/api/candidates', {
         method: 'POST',
         headers: {
@@ -141,7 +163,7 @@ export default function CandidatesList() {
           email: formEmail,
           phone: formPhone,
           linkedin: formLinkedin,
-          resume_url: formResume,
+          resume_url: finalResumeUrl,
           status: formStatus,
           notes: formNotes,
         }),
@@ -442,17 +464,16 @@ export default function CandidatesList() {
 
                   <div>
                     <label className="block text-xs font-bold text-textMuted uppercase tracking-wider mb-2">
-                      Resume PDF URL
+                      Resume PDF Upload
                     </label>
-                    <div className="relative">
-                      <FileCheck className="absolute left-3 top-3.5 w-4 h-4 text-textMuted" />
+                    <div className="relative flex items-center">
+                      <FileCheck className="absolute left-3 w-4 h-4 text-textMuted" />
                       <input
-                        id="form-resume"
-                        type="url"
-                        placeholder="https://example.com/resumes/john.pdf"
-                        className="w-full glass-input pl-10"
-                        value={formResume}
-                        onChange={(e) => setFormResume(e.target.value)}
+                        id="form-resume-file"
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        className="w-full glass-input pl-10 py-[0.4rem] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30 cursor-pointer"
+                        onChange={(e) => setFormResumeFile(e.target.files?.[0] || null)}
                       />
                     </div>
                   </div>

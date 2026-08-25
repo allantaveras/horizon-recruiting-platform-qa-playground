@@ -13,6 +13,7 @@ export default function CandidateApplyPage() {
   const [phone, setPhone] = useState('');
   const [linkedin, setLinkedin] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [notes, setNotes] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -37,6 +38,27 @@ export default function CandidateApplyPage() {
     }
 
     try {
+      let finalResumeUrl = resumeUrl.trim();
+
+      // Handle PDF upload if a file was selected
+      if (resumeFile) {
+        const formData = new FormData();
+        formData.append('file', resumeFile);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const data = await uploadRes.json();
+          throw new Error(data.error || 'Failed to upload resume file');
+        }
+
+        const uploadData = await uploadRes.json();
+        finalResumeUrl = uploadData.url;
+      }
+
       const res = await fetch('/api/apply', {
         method: 'POST',
         headers: {
@@ -47,7 +69,7 @@ export default function CandidateApplyPage() {
           email: email.trim(),
           phone: phone.trim() || null,
           linkedin: linkedin.trim() || null,
-          resume_url: resumeUrl.trim() || null,
+          resume_url: finalResumeUrl || null,
           notes: notes.trim() || null
         }),
       });
@@ -208,19 +230,19 @@ export default function CandidateApplyPage() {
 
           <div>
             <label className="block text-xs font-semibold text-textMuted uppercase tracking-wider mb-2">
-              Resume PDF URL
+              Resume PDF Upload
             </label>
-            <div className="relative">
-              <FileCheck className="absolute left-3 top-3.5 w-5 h-5 text-textMuted" />
+            <div className="relative flex items-center">
+              <FileCheck className="absolute left-3 w-5 h-5 text-textMuted" />
               <input
-                id="apply-resume"
-                type="url"
-                className="w-full glass-input pl-11"
-                placeholder="https://domain.com/resumes/myresume.pdf"
-                value={resumeUrl}
-                onChange={(e) => setResumeUrl(e.target.value)}
+                id="apply-resume-file"
+                type="file"
+                accept=".pdf,application/pdf"
+                className="w-full glass-input pl-11 py-[0.4rem] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/20 file:text-indigo-300 hover:file:bg-indigo-500/30 cursor-pointer"
+                onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
               />
             </div>
+            <p className="text-xs text-textMuted mt-1.5 ml-1">Optional. Maximum file size: 5MB.</p>
           </div>
 
           <div>
