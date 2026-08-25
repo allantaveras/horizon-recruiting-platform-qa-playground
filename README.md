@@ -11,6 +11,8 @@
 
 **Horizon** is a production-grade candidate pipeline tracking and hiring management platform. Built as a comprehensive QA engineering portfolio project, it features a full-stack application with robust end-to-end testing (39 tests across 8 spec files), role-based access controls (RBAC), immutable audit trails, HMAC-signed webhooks, resume file uploads, and a complete CI/CD pipeline — all containerized with Docker Compose.
 
+Horizon is also ready to be used as a Recruitment Platform for anybody that needs it as it is a production ready open-source project
+
 ---
 
 ## 📸 Screenshots
