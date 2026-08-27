@@ -1,4 +1,4 @@
-# Horizon: Candidate Pipeline & Recruiting Activity Tracker
+# Horizon: Candidate Pipeline & Recruiting Activity Tracker [Project In Progress]
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2.4-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.44.1-2EAD33?style=for-the-badge&logo=playwright)](https://playwright.dev/)
